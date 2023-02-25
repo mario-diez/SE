@@ -3,6 +3,7 @@
 int door_status1=0;
 int door_status2=0;
 int safe=0;   //0 es usafe 1 es safe
+int stateChange=0;
 
 void led_green_init()
 {
@@ -38,7 +39,8 @@ void led_red_toggle(void)
 }
 
 void initButtons(){
-  SIM->SCGC5 |= ( SIM_SCGC5_PORTD_MASK | SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTC_MASK);
+  SIM->COPC = 0;
+  SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
   PORTC->PCR[3] = PORT_PCR_MUX(1);
   PORTC->PCR[3] |= PORT_PCR_PE(1) | PORT_PCR_PS(1);
 
@@ -47,34 +49,37 @@ void initButtons(){
 
 }
 
-void ledHandler(int safe){
-  if(safe==1){
-    led_green_toggle();
-  }else {
+void ledHandler(int safe, int stateChange){
+  if(safe!=stateChange){          //Safe
+    led_green_toggle();              //Unsafe
     led_red_toggle();
   }
+
 }
 
 int main(void)
 {
+
   led_green_init();
   led_red_init();
   initButtons();
+  led_green_toggle();
   while (1) {
     if (!(GPIOC->PDIR & (1 << 3))){
-      delay();
       door_status1=!door_status1;
+      delay();
     }
     if (!(GPIOC->PDIR & (1 << 12))){
-      delay();
       door_status2=!door_status2;
+      delay();
     }
     if((door_status1==1 && door_status2==1) || (door_status1==1 && door_status2==0) || (door_status1==0 && door_status2==1)){
-      safe=0;
+      stateChange=1;
     }else{
-      safe=1;
+      stateChange=0;
     }
-    ledHandler(safe);
+    ledHandler(safe,stateChange);
+    safe=stateChange;
   }
 
   return 0;
