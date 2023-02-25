@@ -3,7 +3,7 @@
 int door_status1=0;
 int door_status2=0;
 int safe=0;   //0 es usafe 1 es safe
-int stateChange=0;
+int hasChanged=0;
 
 void led_green_init()
 {
@@ -49,8 +49,8 @@ void initButtons(){
 
 }
 
-void ledHandler(int safe, int stateChange){
-  if(safe!=stateChange){          //Safe
+void ledHandler(int safe, int hasChanged){
+  if(safe!=hasChanged){          //Safe
     led_green_toggle();              //Unsafe
     led_red_toggle();
   }
@@ -74,12 +74,12 @@ int main(void)
       delay();
     }
     if((door_status1==1 && door_status2==1) || (door_status1==1 && door_status2==0) || (door_status1==0 && door_status2==1)){
-      stateChange=1;
+      hasChanged=1;
     }else{
-      stateChange=0;
+      hasChanged=0;
     }
-    ledHandler(safe,stateChange);
-    safe=stateChange;
+    ledHandler(safe,hasChanged);
+    safe=hasChanged;
   }
 
   return 0;
