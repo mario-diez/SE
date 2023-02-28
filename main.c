@@ -3,7 +3,7 @@
 int door_status1=0;
 int door_status2=0;
 int safe=0;   //0 es usafe 1 es safe
-int hasChanged=0;
+int hasChanged=0; //Controla los cambios de estado
 
 void led_green_init()
 {
@@ -50,8 +50,8 @@ void initButtons(){
 }
 
 void ledHandler(int safe, int hasChanged){
-  if(safe!=hasChanged){          //Safe
-    led_green_toggle();              //Unsafe
+  if(safe!=hasChanged){          
+    led_green_toggle();              
     led_red_toggle();
   }
 
@@ -59,7 +59,6 @@ void ledHandler(int safe, int hasChanged){
 
 int main(void)
 {
-
   led_green_init();
   led_red_init();
   initButtons();
