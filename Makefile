@@ -5,7 +5,7 @@ PREFIX=arm-none-eabi-
 ARCHFLAGS=-mthumb -mcpu=cortex-m0plus
 COMMONFLAGS=-g3 -Og -Wall -Werror $(ARCHFLAGS)
 
-CFLAGS=-I./includes $(COMMONFLAGS)
+CFLAGS=-I./includes -I./drivers $(COMMONFLAGS) -D CPU_MKL46Z256VLL4
 LDFLAGS=$(COMMONFLAGS) --specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld
 LDLIBS=
 
@@ -15,31 +15,35 @@ OBJCOPY=$(PREFIX)objcopy
 SIZE=$(PREFIX)size
 RM=rm -f
 
-TARGET=main
+TARGETHELLO = hello_world
+TARGETLED = led_blinky
 
-SRC=$(wildcard *.c)
+SRC=$(wildcard *.c drivers/*.c)
 OBJ=$(patsubst %.c, %.o, $(SRC))
+FILTERHELLO=$(filter-out pin_mux_blink.c pin_mux_blink.h led_blinky.c,$(SRC) )
+FILTERLED=$(filter-out pin_mux_hello.c pin_mux_hello.h hello_world.c,$(SRC) )
+OBJHELLO = $(patsubst %.c, %.o, $(FILTERHELLO))
+OBJLED = $(patsubst %.c, %.o, $(FILTERLED))
+
 
 all: build size
-build: elf srec bin
-elf: $(TARGET).elf
-srec: $(TARGET).srec
-bin: $(TARGET).bin
+build: elf
+elf: $(TARGETHELLO).elf $(TARGETLED).elf
 
 clean:
-	$(RM) $(TARGET).srec $(TARGET).elf $(TARGET).bin $(TARGET).map $(OBJ)
+	$(RM) $(TARGETHELLO).elf $(TARGETHELLO).map $(OBJHELLO) $(TARGETLED).elf $(TARGETLED).map $(OBJLED) 
 
-$(TARGET).elf: $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
+$(TARGETHELLO).elf: $(OBJHELLO)
+	$(LD) $(LDFLAGS) $(OBJHELLO) $(LDLIBS) -o $@
 
-%.srec: %.elf
-	$(OBJCOPY) -O srec $< $@
-
-%.bin: %.elf
-	    $(OBJCOPY) -O binary $< $@
+$(TARGETLED).elf: $(OBJLED)
+	$(LD) $(LDFLAGS) $(OBJLED) $(LDLIBS) -o $@
 
 size:
-	$(SIZE) $(TARGET).elf
+	$(SIZE) $(TARGETHELLO).elf $(TARGETLED).elf
 
-flash: all
-	openocd -f openocd.cfg -c "program $(TARGET).elf verify reset exit"
+flash_hello: all
+		openocd -f openocd.cfg -c "program $(TARGETHELLO).elf verify reset exit"
+
+flash_led: all
+		openocd -f openocd.cfg -c "program $(TARGETLED).elf verify reset exit"
