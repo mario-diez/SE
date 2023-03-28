@@ -43,9 +43,18 @@ void initButtons(){
   SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
   PORTC->PCR[3] = PORT_PCR_MUX(1);
   PORTC->PCR[3] |= PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  PORTC->PCR[3] |= PORT_PCR_PE_MASK | PORT_PCR_PS_MASK;
+
+  PORTC->PCR[3] |= PORT_PCR_IRQC(0xA);
 
   PORTC->PCR[12] = PORT_PCR_MUX(1);
   PORTC->PCR[12] |= PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  PORTC->PCR[12] |= PORT_PCR_PE_MASK | PORT_PCR_PS_MASK;
+
+  PORTC->PCR[12] |= PORT_PCR_IRQC(0xA);
+
+  NVIC_SetPriority(PORTC_PORTD_IRQn,3);
+  NVIC_EnableIRQ(PORTC_PORTD_IRQn);
 
 }
 
@@ -57,20 +66,13 @@ void ledHandler(int safe, int hasChanged){
 
 }
 
-int main(void)
-{
-  led_green_init();
-  led_red_init();
-  initButtons();
-  led_green_toggle();
-  while (1) {
-    if (!(GPIOC->PDIR & (1 << 3))){
+void PORTDIntHandler(void){
+
+    if(!(GPIOC->PDIR & (1 << 3))){
       door_status1=!door_status1;
-      delay();
     }
-    if (!(GPIOC->PDIR & (1 << 12))){
+    if(!(GPIOC->PDIR & (1 << 12))){
       door_status2=!door_status2;
-      delay();
     }
     if((door_status1==1 && door_status2==1) || (door_status1==1 && door_status2==0) || (door_status1==0 && door_status2==1)){
       hasChanged=1;
@@ -79,6 +81,20 @@ int main(void)
     }
     ledHandler(safe,hasChanged);
     safe=hasChanged;
+
+    PORTC->PCR[3] |= PORT_PCR_ISF_MASK;
+    PORTC->PCR[12] |= PORT_PCR_ISF_MASK;
+
+}
+
+int main(void)
+{
+  initButtons();
+  led_green_init();
+  led_red_init();
+  led_green_toggle();
+  while (1) {
+    
   }
 
   return 0;
