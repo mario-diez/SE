@@ -68,10 +68,10 @@ void ledHandler(int safe, int hasChanged){
 
 void PORTDIntHandler(void){
 
-    if(!(GPIOC->PDIR & (1 << 3))){
+    if(!(PORTC->PCR[3] & PORT_PCR_ISF_MASK)){
       door_status1=!door_status1;
     }
-    if(!(GPIOC->PDIR & (1 << 12))){
+    if(!(PORTC->PCR[12] & PORT_PCR_ISF_MASK)){
       door_status2=!door_status2;
     }
     if((door_status1==1 && door_status2==1) || (door_status1==1 && door_status2==0) || (door_status1==0 && door_status2==1)){
