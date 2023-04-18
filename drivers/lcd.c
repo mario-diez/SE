@@ -317,7 +317,7 @@ void lcd_set(uint8_t value, uint8_t digit)
     lcd_display_error(0x01);
   }
 }
-int divisionASM(int dividendo, int divisor){   
+int divisionASM(int dividendo, int divisor,int type){   
     int cociente = 0;
     int resto = 0;
     
@@ -336,6 +336,19 @@ int divisionASM(int dividendo, int divisor){
         "mov %[cocienteAsm],r2\n"
         : [restoAsm] "=r" (resto), [cocienteAsm] "=r" (cociente) : [dividendoAsm] "r" (dividendo), [divisorAsm] "r" (divisor) : "cc","r0","r1","r2"
     );
+
+    switch(type){
+    case 0:
+        return cociente;
+        break;    
+    case 1:
+        return resto;
+        break;
+    default: 
+        return cociente;
+        break;
+        
+}
     return cociente;
 }
 
@@ -348,10 +361,10 @@ void lcd_display_dec(uint16_t value)
     //Display "Err" if value is greater than 4 digits
     lcd_display_error(0x10);
   } else {
-    lcd_set(divisionASM(value,1000), 1);
-    lcd_set(divisionASM(value - (divisionASM(value,1000)*1000),100), 2);
-    lcd_set( divisionASM(value -(divisionASM(value,100)*100),10), 3);
-    lcd_set(value - divisionASM(value,10)*10, 4);
+    lcd_set(divisionASM(value,1000,0), 1);
+    lcd_set(divisionASM(value - (divisionASM(value,1000,0)*1000),100,0), 2);
+    lcd_set( divisionASM(value -(divisionASM(value,100,0)*100),10,0), 3);
+    lcd_set(value - divisionASM(value,10,0)*10, 4);
   }
 }
 
