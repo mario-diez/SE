@@ -1,11 +1,11 @@
-TOOLCHAIN=~/toolchain/gcc-arm-none-eabi-4_9-2014q4/bin
-PREFIX=$(TOOLCHAIN)/arm-none-eabi-
+
+PREFIX=arm-none-eabi-
 
 FREERTOS=freertos
 
 ARCHFLAGS=-mthumb -mcpu=cortex-m0plus
 CFLAGS=-I. -I./includes/ -I./${FREERTOS}/include \
-	   -I./${FREERTOS}/portable/GCC/ARM_CM0 -O0 -g
+	   -I./${FREERTOS}/portable/GCC/ARM_CM0 -O0 -g -I /includes/ldc.h
 LDFLAGS=--specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld
 
 CC=$(PREFIX)gcc
@@ -16,7 +16,7 @@ RM=rm -f
 
 TARGET=main
 
-SRC=main.c startup.c ${FREERTOS}/list.c ${FREERTOS}/queue.c \
+SRC=main.c startup.c lcd.c ${FREERTOS}/list.c ${FREERTOS}/queue.c \
 	${FREERTOS}/tasks.c ${FREERTOS}/portable/MemMang/heap_2.c \
 	${FREERTOS}/portable/GCC/ARM_CM0/port.c
 OBJ=$(patsubst %.c, %.o, $(SRC))
@@ -44,3 +44,6 @@ $(TARGET).elf: $(OBJ)
 
 size:
 	$(SIZE) $(TARGET).elf
+
+flash: all
+	openocd -f openocd.cfg -c "program $(TARGET).elf verify reset exit"
