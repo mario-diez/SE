@@ -37,6 +37,8 @@
 #include "board.h"
 #include "MKL46Z4.h"
 #include "pin_mux.h"
+#include <stdio.h>
+#include <stdlib.h>
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -52,6 +54,7 @@
 /*!
  * @brief Main function
  */
+int MAX_LENGTH=256;
 
 int state=0;
 int state2=0;
@@ -109,32 +112,38 @@ void initButtons(){
 
 }
 
-// void ledHandler(int safe, int hasChanged){
-//   if(safe!=hasChanged){          
-//     led_green_toggle();              
-//     led_red_toggle();
-//   }
+void leftLedControl(void){
+  if(state==0){
+    state=!state;
+    led_red_toggle();
+    if(state2==1){
+      state2=!state2;
+      led_green_toggle();
+    }
+  }
+  
+}
 
-// }
+void rightLedControl(void){
+  if(state2==0){
+    state2=!state2;
+    led_green_toggle();
+    if(state==1){
+      state=!state;
+      led_red_toggle();
+    }
+  }
+
+}
 
 void PORTDIntHandler(void){
 
     if(!(PORTC->PCR[3] & PORT_PCR_ISF_MASK)){
-      state=!state;
-      led_red_toggle();
-      if(state2==1){
-        state2=!state2;
-        led_green_toggle();
-      }
+      leftLedControl();
       
     }
     if(!(PORTC->PCR[12] & PORT_PCR_ISF_MASK)){ 
-      state2=!state2;
-      led_green_toggle();
-      if(state==1){
-        state=!state;
-        led_red_toggle();
-      }
+      rightLedControl();
     }
 
     PORTC->PCR[3] |= PORT_PCR_ISF_MASK;
@@ -144,6 +153,8 @@ void PORTDIntHandler(void){
 
 int main(void)
 {
+  char word[MAX_LENGTH];
+  int index=0;
   char ch;
 
   /* Init board hardware. */
@@ -158,7 +169,61 @@ int main(void)
 
   while (1)
     {
-      ch = GETCHAR();
-      PUTCHAR(ch);
+      index=0;
+      memset(word,0,MAX_LENGTH);
+      PRINTF("$ ");
+      while ((ch = GETCHAR()) != ' ' && ch != '\r') {
+        if (index < 100 - 1) {
+            PUTCHAR(ch);
+            word[index] = ch;
+            index++;
+        }
+      }
+      if(ch==' ' || ch == '\r'){
+        word[index]='\0';
+        PRINTF("\r\n\r\n");
+      }
+      for(int i=0;i<index;i++){
+        PUTCHAR(word[i]);
+      }
+      if(ch==' ' || ch == '\r'){
+        PRINTF("\r\n\r\n");
+      }
+      if(strcmp(word,"led1") == 0) {
+        leftLedControl();
+      } else if(strcmp(word,"led2") == 0) {
+        rightLedControl();
+      }else if (strcmp(word,"off") == 0) {
+        if(state==1){
+          state=!state;
+          led_red_toggle();
+        }
+        if(state2==1){
+          state2=!state2;
+          led_green_toggle();
+        }
+      } else
+      if (strcmp(word,"toggle") == 0) {
+        if(state==1){
+          state=!state;
+          led_red_toggle();
+          if(state2==0){
+            state2=!state2;
+            led_green_toggle();
+          }
+        }else if(state2==1){
+          state2=!state2;
+          led_green_toggle();
+          if(state==0){
+            state=!state;
+            led_red_toggle();
+          }
+        }
+        
+      }
+      
+      
+      // ch = GETCHAR();
+      
     }
 }

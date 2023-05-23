@@ -6,7 +6,7 @@ ARCHFLAGS=-mthumb -mcpu=cortex-m0plus
 COMMONFLAGS=-g3 -Og -Wall -Werror $(ARCHFLAGS)
 
 CFLAGS=-I./BOARD -I./drivers -I./utilities -I./CMSIS  $(COMMONFLAGS) -D CPU_MKL46Z256VLL4
-LDFLAGS=$(COMMONFLAGS) --specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld
+LDFLAGS=$(COMMONFLAGS) --specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld -std=c99 -Wall
 LDLIBS=
 
 CC=$(PREFIX)gcc
