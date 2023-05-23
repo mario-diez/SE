@@ -1,12 +1,13 @@
-
+#TOOLCHAIN=~/toolchain/gcc-arm-none-eabi-4_9-2014q4/bin
+#PREFIX=$(TOOLCHAIN)/arm-none-eabi-
 PREFIX=arm-none-eabi-
 
-FREERTOS=freertos
-
 ARCHFLAGS=-mthumb -mcpu=cortex-m0plus
-CFLAGS=-I. -I./includes/ -I./${FREERTOS}/include \
-	   -I./${FREERTOS}/portable/GCC/ARM_CM0 -O0 -g -I /includes/ldc.h
-LDFLAGS=--specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld
+COMMONFLAGS=-g3 -Og -Wall -Werror $(ARCHFLAGS)
+
+CFLAGS=-I./BOARD -I./drivers -I./utilities -I./CMSIS  $(COMMONFLAGS) -D CPU_MKL46Z256VLL4
+LDFLAGS=$(COMMONFLAGS) --specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-Tlink.ld
+LDLIBS=
 
 CC=$(PREFIX)gcc
 LD=$(PREFIX)gcc
@@ -16,9 +17,7 @@ RM=rm -f
 
 TARGET=main
 
-SRC=main.c startup.c lcd.c ${FREERTOS}/list.c ${FREERTOS}/queue.c \
-	${FREERTOS}/tasks.c ${FREERTOS}/portable/MemMang/heap_2.c \
-	${FREERTOS}/portable/GCC/ARM_CM0/port.c
+SRC=$(wildcard *.c drivers/*.c BOARD/*.c utilities/*.c CMSIS/*.c)
 OBJ=$(patsubst %.c, %.o, $(SRC))
 
 all: build size
@@ -30,17 +29,14 @@ bin: $(TARGET).bin
 clean:
 	$(RM) $(TARGET).srec $(TARGET).elf $(TARGET).bin $(TARGET).map $(OBJ)
 
-%.o: %.c
-	$(CC) -c $(ARCHFLAGS) $(CFLAGS) -o $@ $<
-
 $(TARGET).elf: $(OBJ)
-	$(LD) $(LDFLAGS) -o $@ $(OBJ)
+	$(LD) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
 
 %.srec: %.elf
 	$(OBJCOPY) -O srec $< $@
 
 %.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
+	    $(OBJCOPY) -O binary $< $@
 
 size:
 	$(SIZE) $(TARGET).elf
