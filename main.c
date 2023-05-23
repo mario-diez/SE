@@ -35,7 +35,7 @@
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "board.h"
-
+#include "MKL46Z4.h"
 #include "pin_mux.h"
 /*******************************************************************************
  * Definitions
@@ -52,6 +52,96 @@
 /*!
  * @brief Main function
  */
+
+int state=0;
+int state2=0;
+
+void led_green_init()
+{
+  SIM->COPC = 0;
+  SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK;
+  PORTD->PCR[5] = PORT_PCR_MUX(1);
+  GPIOD->PDDR |= (1 << 5);
+  GPIOD->PSOR = (1 << 5);
+}
+void delay(void)
+{
+  volatile int i;
+
+  for (i = 0; i < 1000000; i++);
+}
+void led_green_toggle()
+{
+  GPIOD->PTOR = (1 << 5);
+}
+
+void led_red_init()
+{
+  SIM->COPC = 0;
+  SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
+  PORTE->PCR[29] = PORT_PCR_MUX(1);
+  GPIOE->PDDR |= (1 << 29);
+  GPIOE->PSOR = (1 << 29);
+}
+
+void led_red_toggle(void)
+{
+  GPIOE->PTOR = (1 << 29);
+}
+
+void initButtons(){
+  SIM->COPC = 0;
+  SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
+  PORTC->PCR[3] = PORT_PCR_MUX(1);
+  PORTC->PCR[3] |= PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  PORTC->PCR[3] |= PORT_PCR_PE_MASK | PORT_PCR_PS_MASK;
+
+  PORTC->PCR[3] |= PORT_PCR_IRQC(0xA);
+
+  PORTC->PCR[12] = PORT_PCR_MUX(1);
+  PORTC->PCR[12] |= PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  PORTC->PCR[12] |= PORT_PCR_PE_MASK | PORT_PCR_PS_MASK;
+
+  PORTC->PCR[12] |= PORT_PCR_IRQC(0xA);
+
+  NVIC_SetPriority(PORTC_PORTD_IRQn,3);
+  NVIC_EnableIRQ(PORTC_PORTD_IRQn);
+
+}
+
+// void ledHandler(int safe, int hasChanged){
+//   if(safe!=hasChanged){          
+//     led_green_toggle();              
+//     led_red_toggle();
+//   }
+
+// }
+
+void PORTDIntHandler(void){
+
+    if(!(PORTC->PCR[3] & PORT_PCR_ISF_MASK)){
+      state=!state;
+      led_red_toggle();
+      if(state2==1){
+        state2=!state2;
+        led_green_toggle();
+      }
+      
+    }
+    if(!(PORTC->PCR[12] & PORT_PCR_ISF_MASK)){ 
+      state2=!state2;
+      led_green_toggle();
+      if(state==1){
+        state=!state;
+        led_red_toggle();
+      }
+    }
+
+    PORTC->PCR[3] |= PORT_PCR_ISF_MASK;
+    PORTC->PCR[12] |= PORT_PCR_ISF_MASK;
+
+}
+
 int main(void)
 {
   char ch;
@@ -60,6 +150,9 @@ int main(void)
   BOARD_InitPins();
   BOARD_BootClockRUN();
   BOARD_InitDebugConsole();
+  initButtons();
+  led_green_init();
+  led_red_init();
 
   PRINTF("\r\nReinicio!\r\n");
 
